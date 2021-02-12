@@ -27,25 +27,36 @@
 												
 												<div class="col-3 col-12-small">
 													<dl class="actions">
-														
-														<dt> <input type="int" name="teza" id="teza" value="" placeholder="Teža [kg]" class="primary"/> <br>
+														<dt> Teža [kg]:
 														</dt>
-														<dt><input type="text" name="povzrocitelj" id="povzrocitelj" value="" placeholder="Povzročitelj" /> 
+														<dt> <input type="int" name="teza" id="teza" value="{{rezervirano_mesto['teza']['vrednost']}}" placeholder="{{rezervirano_mesto['teza']['ime']}}" class="primary"/> <br>
 														</dt>
-														<dt> <input type="date" name="datum_uvoza" id="datum_uvoza" value="" placeholder="Datum uvoza" class="primary"/>
+														<dt> Povzročitelj:
 														</dt>
-														<dt> <input type="text" name="klasifikacijska_stevilka" id="klasifikacijska_stevilka" value="" placeholder="Klasifikacijska številka" class="primary"/>
+														<dt><input type="text" name="povzrocitelj" id="povzrocitelj" value="{{rezervirano_mesto['povzrocitelj']['vrednost']}}" placeholder="{{rezervirano_mesto['povzrocitelj']['ime']}}" /> 
+														</dt>
+														<dt> Datum uvoza:
+														</dt>
+														<dt> <input type="date" name="datum_uvoza" id="datum_uvoza" value="{{rezervirano_mesto['datum_uvoza']['vrednost']}}" placeholder="{{rezervirano_mesto['datum_uvoza']['ime']}}" class="primary"/>
+														</dt>
+														<dt> Klasifikacijska številka:
+														</dt>
+														<dt> <input type="text" name="klasifikacijska_stevilka" id="klasifikacijska_stevilka" value="{{rezervirano_mesto['klasifikacijska_stevilka']['vrednost']}}" placeholder="{{rezervirano_mesto['klasifikacijska_stevilka']['ime']}}" class="primary"/>
+														</dt>
+														<dt> Skladišče:
 														</dt>
 														<dt> <select name="skladisce" id="skladisce" class="primary">
-														<option value="">- Skladišče -</option>
+														<option value={{rezervirano_mesto['skladisce']['vrednost']}}>- {{rezervirano_mesto['skladisce']['ime']}} -</option>
 														% from model import Skladisce
 														% for id, ime in Skladisce.skladisce():
 															<option value={{id}}>{{ime}}</option>
 														% end
 														</select>
 														</dt>
+														<dt> Opomba uvoza:
+														</dt>
 														<dt> <select name="opomba_uvoza" id="opomba_uvoza" />
-														<option value="">- Opomba -</option>
+														<option value={{rezervirano_mesto['opomba_uvoza']['vrednost']}}>- {{rezervirano_mesto['opomba_uvoza']['ime']}} -</option>
 														% from model import Opomba
 														% for id, ime in Opomba.opomba():
 															<option value={{id}}>{{ime}}</option>

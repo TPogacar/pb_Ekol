@@ -1,7 +1,7 @@
   
 <!DOCTYPE html>
 
-<html lang='sl-SI'>
+<html lang='slo-SLO'>
 	<head>
 		<title>Skladišče podjetja Ekol</title>
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">

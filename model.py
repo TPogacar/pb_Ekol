@@ -7,7 +7,7 @@ conn = sqlite3.connect('Ekol.sqlite')
 ustvari_bazo_ce_ne_obstaja(conn)
 conn.execute('PRAGMA foreign_keys = ON')
 
-uporabnik, podjetja, vrsta_odpadka, skladisce, odpadek, opomba = pripravi_tabele(conn)
+uporabnik, Podjetje, vrsta_odpadka, skladisce, odpadek, opomba = pripravi_tabele(conn)
 
 
 class LoginError(Exception):
@@ -68,7 +68,7 @@ class Uporabnik(Ekol):
 
 
 # ----------------------------------------------------------------------------------------------------
-class Podjetja(Ekol):
+class Podjetje(Ekol):
     def __init__(self, ime, id = None):
         self.id = id
         self.ime = ime
@@ -81,17 +81,34 @@ class Podjetja(Ekol):
     def dodaj_v_bazo(self):
         assert self.id is None
         with conn:
-            id = Podjetja.dodaj_vrstico(ime=self.ime)
+            id = Podjetje.dodaj_vrstico(ime=self.ime)
             self.id = id
 
 
     @staticmethod
-    def ime_podjetja(index):
+    def ime_Podjetje(index):
         '''
-            vrne ime podjetja, ki mu pripada dani index
+            vrne ime Podjetja, ki mu pripada dani index
         '''
         return conn.execute(''' SELECT ime FROM podjetje
                             WEHERE id = ?;''', (index)).fetchone()
+
+
+    @staticmethod
+    def id_podjetja(ime):
+        '''
+            Vrne `id` Podjetja. Če podjetje `ime` še ni v bazi, ga pred tem doda vajno.
+        '''
+        try:
+            # povzročitelj je že v tabeli podjetij
+            return conn.execute("""
+                    SELECT id FROM podjetje
+                    WHERE ime = ?;
+                """, [ime]).fetchone()[0]
+        except:
+            # imamo novo podjetje
+            cur = conn.execute("INSERT INTO podjetje (ime) VALUES (?);", [ime])               
+            return cur.lastrowid
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -122,6 +139,18 @@ class Opomba(Ekol):
                 FROM opomba
             ;''')]
 
+
+    @staticmethod
+    def opomba_ime(iskani_id):
+        '''
+            vrne ime za pripadajoč `iskani_id` opombe
+        '''
+        return conn.execute('''
+                SELECT ime
+                FROM opomba
+                WHERE id = ?
+            ;''', [iskani_id]).fetchone()[0]
+
         
 # ----------------------------------------------------------------------------------------------------
 class VrstaOdpadka(Ekol):
@@ -150,6 +179,17 @@ class VrstaOdpadka(Ekol):
             ;''')]
 
 
+    @staticmethod
+    def klas_stevilke():
+        '''
+            vrne množico vseh klasifikacijskih številk
+        '''
+        return set(klas_st for (klas_st,) in conn.execute('''
+                SELECT klasifikacijska_stevilka
+                FROM vrsta_odpadka
+            ;'''))
+
+
 # ----------------------------------------------------------------------------------------------------
 class Skladisce(Ekol):
     def __init__(self, id, ime=None, odp=None, st=None, kl=None, t=None):
@@ -175,6 +215,18 @@ class Skladisce(Ekol):
                 SELECT *
                 FROM skladisce
             ;''')]
+
+
+    @staticmethod
+    def skladisce_ime(iskani_id):
+        '''
+            vrne prapadajoče ime skladišča za id `iskani id`
+        '''
+        return conn.execute('''
+                SELECT ime
+                FROM skladisce
+                WHERE id = ?
+            ;''', [iskani_id]).fetchone()[0]
 
 
     @staticmethod
@@ -246,24 +298,11 @@ class Odpadek(Ekol):
         sl['skladisce'] = self.skladisce
 
         # potrebujemo index
-        if self.povzrocitelj:
-            try:
-                # povzročitelj je že v tabeli podjetij
-                sl['povzrocitelj'] = conn.execute("""
-                        SELECT id FROM podjetje
-                        WHERE ime = ?;
-                    """, [self.povzrocitelj]).fetchone()[0]
-            except:
-                # imamo novo podjetje
-                cur = conn.execute("INSERT INTO podjetje (ime) VALUES (?);", [self.povzrocitelj])
-                print(cur.lastrowid)               
-                sl['povzrocitelj'] = cur.lastrowid
-
+        if self.povzrocitelj:              
+            sl['povzrocitelj'] = Podjetje.id_podjetja(self.povzrocitelj)
         else:
             sl['povzrocitelj'] = None
         with conn:
-            print(self)
-            print(sl)
             return odpadek.dodaj_vrstico(**sl)  # id
 
 
@@ -283,7 +322,7 @@ class Odpadek(Ekol):
                     """, [prejemnik]).fetchone()[0]
             except:
                 with conn:
-                    sl['prejemnik'] = Podjetja.dodaj_vrstico(ime=prejemnik)
+                    sl['prejemnik'] = Podjetje.dodaj_vrstico(ime=prejemnik)
         else:
             sl['prejemnik'] = None
         sl['datum_izvoza'] = datum_izvoza

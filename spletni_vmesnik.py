@@ -42,8 +42,33 @@ def izberi():
 # UVOZ ODPADKA ------------------------------------------------------------------------------------------
 @get('/uvoz_odpadka')
 def uvoz_odpadka():
-    opomba = [(id, ime) for id, ime in Opomba.opomba()]
-    return template('uvoz_odpadka.tpl')
+    placeholder = {
+        'teza': {
+            'vrednost': "",
+            'ime': "Teža [kg]"
+        },
+        'povzrocitelj': {
+            'vrednost': "",
+            'ime': "Povzročitelj"
+        },
+        'datum_uvoza': {
+            'vrednost': "",
+            'ime': "Datum uvoza"
+        },
+        'klasifikacijska_stevilka': {
+            'vrednost': "",
+            'ime': "Klasifikacijska številka"
+        },
+        'skladisce': {
+            'vrednost': "",
+            'ime': "Skladišče"
+        },
+        'opomba_uvoza': {
+            'vrednost': "",
+            'ime': "Opomba"
+        }
+    }
+    return template('uvoz_odpadka.tpl', rezervirano_mesto=placeholder)
 
 
 @route('/podatki_o_odpadku', method='POST')
@@ -54,15 +79,105 @@ def dodaj_odpadek():
     klasifikacijska_stevilka = request.forms.get('klasifikacijska_stevilka')
     skladisce = request.forms.get('skladisce')
     opomba_uvoza = request.forms.get('opomba_uvoza')   
+
+    # preverimo ustreznost vnešenih podatkov
+    neustrezni_vnos = False, ''
     
+    if teza == '':
+        sl_teza = {
+            'vrednost': "",
+            'ime': "Teža [kg]"
+        }
+        neustrezni_vnos = True, 'teže'
+    else:
+        sl_teza = {
+            'vrednost': teza,
+            'ime': teza
+        }
+        
+    if datum_uvoza == '':
+        sl_datum_uvoza = {
+            'vrednost': "",
+            'ime': "Datum uvoza"
+        }
+        neustrezni_vnos = True, 'datuma uvoza'
+    else:
+        sl_datum_uvoza = {
+            'vrednost': datum_uvoza,
+            'ime': datum_uvoza
+        }
+
+    if klasifikacijska_stevilka == '':
+        sl_klasifikacijska_stevilka = {
+            'vrednost': "",
+            'ime': "Klasifikacijska številka"
+        }
+        neustrezni_vnos = True, 'klasifikacijske številke'
+    elif klasifikacijska_stevilka not in VrstaOdpadka.klas_stevilke():
+        sl_klasifikacijska_stevilka = {
+            'vrednost': klasifikacijska_stevilka,
+            'ime': klasifikacijska_stevilka
+        }
+        neustrezni_vnos = True, 'klasifikacijske številke'
+    else:
+        sl_klasifikacijska_stevilka = {
+            'vrednost': klasifikacijska_stevilka,
+            'ime': klasifikacijska_stevilka
+        }
+    
+    if skladisce == '':
+        sl_skladisce = {
+            'vrednost': "",
+            'ime': "Skladišče"
+        }
+        neustrezni_vnos = True, 'skladišča'
+    else:
+        sl_skladisce = {
+            'vrednost': skladisce,
+            'ime': Skladisce.skladisce_ime(skladisce)
+        }
+
+    if neustrezni_vnos[0]:
+        # od uporabnika zahtevamo, da popravi vnešene podatke
+            
+        if opomba_uvoza == '':
+            sl_opomba_uvoza = {
+                'vrednost': "",
+                'ime': "Opomba"
+            }
+        else:
+            sl_opomba_uvoza = {
+                    'vrednost': opomba_uvoza,
+                    'ime': Opomba.opomba_ime(opomba_uvoza)
+                }
+        
+        if povzrocitelj == '':
+            sl_povzrocitelj = {
+                'vrednost': "",
+                'ime': "Povzročitelj"
+            }
+        else:
+            sl_povzrocitelj = {
+                'vrednost': povzrocitelj,
+                'ime': Podjetje.id_podjetja(povzrocitelj)
+            }
+
+        placeholder = {
+            'teza': sl_teza,
+            'povzrocitelj': sl_povzrocitelj,
+            'datum_uvoza': sl_datum_uvoza,
+            'klasifikacijska_stevilka': sl_klasifikacijska_stevilka,
+            'skladisce': sl_skladisce,
+            'opomba_uvoza': sl_opomba_uvoza
+        }
+        return template('uvoz_odpadka.tpl', rezervirano_mesto=placeholder, opozorilo=f"Neustrezen vnos {neustrezni_vnos[1]}! Prosimo, poskusite ponovno.")
+    
+    # vnešeni podatki so ustrezni => uvozimo odpadeks
     if opomba_uvoza == '':
         opomba_uvoza = None
     if povzrocitelj == '':
         povzrocitelj = None
-    
-    if teza == '' or datum_uvoza == '' or klasifikacijska_stevilka == '' or skladisce == '':
-        return template('uvoz_odpadka.tpl', opozorilo="Neustrezni vnos! Prosimo, poskusite ponovno.")
-    
+
     odpadek = Odpadek(teza, klasifikacijska_stevilka, skladisce,
      datum_uvoza, povzrocitelj, opomba_uvoza)
     
@@ -281,4 +396,4 @@ def zadnji():
 # ----------------------------------------------------------------------------------------------------------------------------------
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    run(app, host='localhost', port=port, reloader=True, debug=True)
+    run(app, host='localhost', port=port, reloader=False, debug=False)
