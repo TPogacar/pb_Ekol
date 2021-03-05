@@ -83,6 +83,14 @@ def dodaj_odpadek():
     # preverimo ustreznost vnešenih podatkov
     neustrezni_vnos = False, ''
     
+    try:
+        int(teza)
+    except:
+        sl_teza = {
+            'vrednost': teza,
+            'ime': "Teža [kg]"
+        }
+        neustrezni_vnos = True, 'teže'
     if teza == '':
         sl_teza = {
             'vrednost': "",
